@@ -1,49 +1,36 @@
-import ctypes
-import os
+import subprocess
 
-def main():
-    print("MENU DECOMPILER")
-    print("1. Decompile .so file")
-    print("2. Exit")
-
-    choice = input("Pilih menu (1/2): ")
-
-    if choice == '1':
-        file_name = input("Masukkan nama file (.so): ")
-        decompile_so_file(file_name)
-    elif choice == '2':
-        print("Goodbye!")
-    else:
-        print("Input tidak valid, silakan pilih menu 1 atau 2.")
-        main()
-
-def decompile_so_file(file_name):
-    if not file_name.endswith('.so'):
+def decompile_so_file(input_file, output_file):
+    if not input_file.endswith('.so'):
         print("File harus berformat .so.")
         return
 
-    if not os.path.exists(file_name):
-        print("File tidak ditemukan.")
-        return
+    # Menggunakan uncompyle6 untuk mencoba decompile
+    try:
+        output = subprocess.check_output(['uncompyle6', input_file], universal_newlines=True)
+        with open(output_file, 'w') as f:
+            f.write(output)
+        print(f"File berhasil didecompile dan disimpan sebagai {output_file}.")
+    except subprocess.CalledProcessError as e:
+        print(f"Gagal decompile: {e}")
 
-    lib = ctypes.cdll.LoadLibrary(file_name)
-    functions = [f for f in dir(lib) if not f.startswith('__')]
-
-    if not functions:
-        print("Tidak ada fungsi yang dapat didecompile.")
-        return
-
-    for function in functions:
-        print(f"\nFunction: {function}")
-        try:
-            decompiled_code = disassemble_function(lib, function)
-            print(decompiled_code)
-        except Exception as e:
-            print(f"Error: {e}")
-
-def disassemble_function(lib, function_name):
-    function = getattr(lib, function_name)
-    return dis.dis(function)
+def main():
+    while True:
+        print("MENU DECOMPILER")
+        print("1. Decompile .so file")
+        print("2. Exit")
+    
+        choice = input("Pilih menu (1/2): ")
+    
+        if choice == '1':
+            input_file = input("Masukkan nama file (.so) untuk decompile: ")
+            output_file = input("Masukkan nama file keluaran: ")
+            decompile_so_file(input_file, output_file)
+        elif choice == '2':
+            print("Goodbye!")
+            break
+        else:
+            print("Input tidak valid, silakan pilih menu 1 atau 2.")
 
 if __name__ == "__main__":
     main()
